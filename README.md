@@ -1,7 +1,13 @@
 # news
 
-ÁøÇà »çÇ× 
-07.17 AWS EC2,RDS,S3 instance »ý¼º ¹× ¼³Á¤
-	EC2 Xshell¿¡¼­ ¿¬°á
-	EC2 ÆÄÀÌ½ã ¼³Ä¡
-	DB , Crawling ÁøÇàÁß
+<ì§„í–‰ ì‚¬í•­>
+
+[ 07.17 ]
+	
+	AWS EC2,RDS,S3 instance ìƒì„± ë° ì„¤ì •
+	
+	EC2 Xshellì—ì„œ ì—°ê²°
+	
+	EC2 íŒŒì´ì¬ ì„¤ì¹˜
+	
+	DB , Crawling ì§„í–‰ì¤‘
