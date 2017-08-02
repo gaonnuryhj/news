@@ -2,14 +2,25 @@ from bs4 import BeautifulSoup
 import urllib.request
 from urllib.parse import quote
 import html
+import pymysql
  
 TARGET_URL_BEFORE_PAGE_NUM = "http://news.donga.com/search?p="
 TARGET_URL_BEFORE_KEWORD = '&query='
 TARGET_URL_REST = '&check_news=2&more=1&sorting=1&search_date=4&v1=&v2=&range=1'
- 
+
+def deleteStr(str):
+    result_str=str.replace('‘','')
+    result_str=str.replace('’','')
+    result_str=str.replace('“','')
+    result_str=str.replace('”','')
+
+    return result_str
  
 # 기사 검색 페이지에서 기사 제목에 링크된 기사 본문 주소 받아오기
-def get_link_from_news_title(page_num, URL):
+def get_link_from_news_title(page_num, URL,company):
+    conn = pymysql.connect(host='db.cgxewdly4d7d.ap-northeast-2.rds.amazonaws.com',port=3306 ,user = 'hjgw',password='guswjdrldnd',database = 'news',charset='utf8' )
+    curs = conn.cursor()
+ 
     for i in range(page_num):
         current_page_num = 1 + i*15
         position = URL.index('=')
@@ -37,7 +48,12 @@ def get_link_from_news_title(page_num, URL):
                          break
                 else:
                     break
-            print (read_headline1)
+
+            
+
+            # 내용 url 가져오기
+            content_url = str(title_link[title_link.find('href="')+6:title_link.find('"',title_link.find('href="')+6)])
+            
             
 
             # 기사 시간, 날짜 
@@ -55,8 +71,8 @@ def get_link_from_news_title(page_num, URL):
                         loop_check =1
                     else:
                         time = loop
-                print (date)  # 날짜
-                print (time)  # 시간
+                
+                
                 check =2
             for s in date_time:
                 if check is 1:
@@ -74,10 +90,15 @@ def get_link_from_news_title(page_num, URL):
                             loop_check =1
                         else:
                             time = loop
-                    print (date)  # 날짜
-                    print (time)  # 시간
+                    
                     break
 
+        # 이미지 url 가져오기
+        for img in soup.find_all('div','p'):
+            img_url_tag = str(img.select('img'))
+            img_url = str(img_url_tag[img_url_tag.find('src="')+5:img_url_tag.find('"',img_url_tag.find('src="')+5)])
+            
+        
           
         # 기사 요약 내용 가져오기   
 
@@ -99,8 +120,15 @@ def get_link_from_news_title(page_num, URL):
                 else:
                     break
 
-            print (contents1)
             
+
+    company = str(company)
+    date = str(date)
+    time = str(time)
+    sql ="insert into "+company+" (Headline,Content,ContentUrl,ImgUrl,NewsTime,NewsDate) values (%s, %s, %s, %s, %s, %s)"
+    curs.execute( sql ,( deleteStr(read_headline1) ,deleteStr(contents1) , content_url , img_url , time , date))
+
+    conn.close() 
 
 
  
@@ -114,13 +142,17 @@ def get_text(URL):
  
  
 # 메인함수
-def main():   
-    keyword = '삼성'
-    page_num =3
-    target_URL = TARGET_URL_BEFORE_PAGE_NUM + TARGET_URL_BEFORE_KEWORD \
-                 + quote(keyword) + TARGET_URL_REST
-    get_link_from_news_title(page_num, target_URL)
+def main():  
 
- 
+   
+    keyword = ['삼성','LG','현대','SK','네이버','카카오']
+    for s in keyword:
+        page_num =3
+        target_URL = TARGET_URL_BEFORE_PAGE_NUM + TARGET_URL_BEFORE_KEWORD \
+                     + quote(s) + TARGET_URL_REST
+        get_link_from_news_title(page_num, target_URL,s)
+        
+
+
 if __name__ == '__main__':
     main()
