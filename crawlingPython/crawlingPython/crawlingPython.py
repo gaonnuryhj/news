@@ -20,7 +20,13 @@ def deleteStr(str):
 def get_link_from_news_title(page_num, URL,company):
     conn = pymysql.connect(host='db.cgxewdly4d7d.ap-northeast-2.rds.amazonaws.com',port=3306 ,user = 'hjgw',password='guswjdrldnd',database = 'news',charset='utf8' )
     curs = conn.cursor()
- 
+    list_headline=[]
+    list_contentUrl=[]
+    list_time=[]
+    list_date=[]
+    list_img=[]
+    list_content=[]
+    
     for i in range(page_num):
         current_page_num = 1 + i*15
         position = URL.index('=')
@@ -30,7 +36,7 @@ def get_link_from_news_title(page_num, URL,company):
 
 
         for title in soup.find_all('p', 'tit'):
-
+            
             #기사 헤드라인 
             title_link = str(title.select('a'))
             read_headline1= str(title_link[str(title_link).find('>')+1:str(title_link).find('<',str(title_link).find('>')+1)])
@@ -92,12 +98,19 @@ def get_link_from_news_title(page_num, URL,company):
                             time = loop
                     
                     break
+            list_headline.append(read_headline1)
+            list_contentUrl.append(content_url)
+            list_time.append(time)
+            list_date.append(date)
 
         # 이미지 url 가져오기
-        for img in soup.find_all('div','p'):
-            img_url_tag = str(img.select('img'))
-            img_url = str(img_url_tag[img_url_tag.find('src="')+5:img_url_tag.find('"',img_url_tag.find('src="')+5)])
-            
+        for title in soup.find_all('div', 'searchList'):
+            if title.find('div','p') is not -1:
+                img_url_tag = str(title.select('img'))
+                img_url = str(img_url_tag[img_url_tag.find('src="')+5:img_url_tag.find('"',img_url_tag.find('src="')+5)])
+                list_img.append(img_url)
+            else:
+                list_img.append("")
         
           
         # 기사 요약 내용 가져오기   
@@ -119,20 +132,22 @@ def get_link_from_news_title(page_num, URL,company):
                          break
                 else:
                     break
-
-            
-
-    company = str(company)
-    date = str(date)
-    time = str(time)
-    sql ="insert into "+company+" (Headline,Content,ContentUrl,ImgUrl,NewsTime,NewsDate) values (%s, %s, %s, %s, %s, %s)"
-    curs.execute( sql ,( deleteStr(read_headline1) ,deleteStr(contents1) , content_url , img_url , time , date))
-
+            list_content.append(contents1)
+    #print(len(list_headline),len(list_content),len(list_contentUrl),len(list_date),len(list_time),len(list_img))
+    for i in range(0,len(list_headline)): 
+        company = str(company)
+        date = str(date)
+        time = str(time)
+        sql ="insert into "+company+" (Headline,Content,ContentUrl,ImgUrl,NewsTime,NewsDate) values (%s, %s, %s, %s, %s, %s)"
+        curs.execute( sql ,( deleteStr(list_headline[i]) ,deleteStr(list_content[i]) , list_contentUrl[i] , list_img[i] , list_time[i] , list_date[i]))
+        #print(list_time[i] , list_date[i])
+        #print(deleteStr(list_headline[i]) ,deleteStr(list_content[i]) , list_contentUrl[i] , list_img[i] ,list_time[i] , list_date[i])
+        #print("-------------------------------------")
+        conn.commit()   
     conn.close() 
-
-
  
 # 기사 본문 내용 긁어오기 (위 함수 내부에서 기사 본문 주소 받아 사용되는 함수)
+# 사용 x
 def get_text(URL):
     source_code_from_url = urllib.request.urlopen(URL)
     soup = BeautifulSoup(source_code_from_url, 'html.parser', from_encoding='utf-8')
@@ -146,11 +161,11 @@ def main():
 
    
     keyword = ['삼성','LG','현대','SK','네이버','카카오']
-    for s in keyword:
-        page_num =3
-        target_URL = TARGET_URL_BEFORE_PAGE_NUM + TARGET_URL_BEFORE_KEWORD \
-                     + quote(s) + TARGET_URL_REST
-        get_link_from_news_title(page_num, target_URL,s)
+    #for s in keyword:
+    page_num =3
+    target_URL = TARGET_URL_BEFORE_PAGE_NUM + TARGET_URL_BEFORE_KEWORD \
+                     + quote('SK') + TARGET_URL_REST
+    get_link_from_news_title(page_num, target_URL,'SK')
         
 
 
