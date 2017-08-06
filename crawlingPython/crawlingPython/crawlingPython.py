@@ -161,11 +161,11 @@ def main():
 
    
     keyword = ['삼성','LG','현대','SK','네이버','카카오']
-    #for s in keyword:
-    page_num =3
-    target_URL = TARGET_URL_BEFORE_PAGE_NUM + TARGET_URL_BEFORE_KEWORD \
-                     + quote('SK') + TARGET_URL_REST
-    get_link_from_news_title(page_num, target_URL,'SK')
+    for s in keyword:
+        page_num =3
+        target_URL = TARGET_URL_BEFORE_PAGE_NUM + TARGET_URL_BEFORE_KEWORD \
+                     + quote(s) + TARGET_URL_REST
+        get_link_from_news_title(page_num, target_URL,s)
         
 
 
