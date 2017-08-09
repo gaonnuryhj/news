@@ -3,10 +3,12 @@ import urllib.request
 from urllib.parse import quote
 import html
 import pymysql
+import threading
  
 TARGET_URL_BEFORE_PAGE_NUM = "http://news.donga.com/search?p="
 TARGET_URL_BEFORE_KEWORD = '&query='
 TARGET_URL_REST = '&check_news=2&more=1&sorting=1&search_date=4&v1=&v2=&range=1'
+
 
 def deleteStr(str):
     result_str=str.replace('‘','')
@@ -20,6 +22,8 @@ def deleteStr(str):
 def get_link_from_news_title(page_num, URL,company):
     conn = pymysql.connect(host='db.cgxewdly4d7d.ap-northeast-2.rds.amazonaws.com',port=3306 ,user = 'hjgw',password='guswjdrldnd',database = 'news',charset='utf8' )
     curs = conn.cursor()
+    sql_truncate="truncate table "+company
+    curs.execute(sql_truncate)
     list_headline=[]
     list_contentUrl=[]
     list_time=[]
@@ -64,11 +68,14 @@ def get_link_from_news_title(page_num, URL,company):
 
             # 기사 시간, 날짜 
             title_time = str(title.select('span'))
+           
             if title_time.find('<span class') is not -1:
                 date_time = title_time.split('</span>')
+              
                 check=1;
             else:
                 date_time = str(title_time[title_time.find('<span>')+6:title_time.find('</span>')])
+               
                 split_date_time = date_time.split(' ')
                 loop_check=0;
                 for loop in split_date_time:
@@ -82,22 +89,26 @@ def get_link_from_news_title(page_num, URL,company):
                 check =2
             for s in date_time:
                 if check is 1:
+
                     check =3
                 elif check is 2:
                     break
                 else:
-                    n_date_time = s
-                    date_time_str = str(n_date_time[str(n_date_time).find('<span>')+6:])
-                    split_date_time_n = date_time_str.split(' ')
-                    loop_check=0;
-                    for loop in split_date_time_n:
-                        if loop_check is 0:
-                            date = loop
-                            loop_check =1
-                        else:
-                            time = loop
+                    if s.find('<span class') is not -1:
+                        continue
+                    else:
+                        n_date_time = s
+                        date_time_str = str(n_date_time[str(n_date_time).find('<span>')+6:])                    
+                        split_date_time_n = date_time_str.split(' ')
+                        loop_check=0;
+                        for loop in split_date_time_n:
+                            if loop_check is 0:
+                                date = loop
+                                loop_check =1
+                            else:
+                                time = loop
                     
-                    break
+                        break
             list_headline.append(read_headline1)
             list_contentUrl.append(content_url)
             list_time.append(time)
@@ -154,19 +165,24 @@ def get_text(URL):
     content_of_article = soup.select('div.article_txt')
     for item in content_of_article:
         string_item = str(item.find_all(text=True))
- 
- 
-# 메인함수
-def main():  
 
-   
+def function():
     keyword = ['삼성','LG','현대','SK','네이버','카카오']
     for s in keyword:
         page_num =3
         target_URL = TARGET_URL_BEFORE_PAGE_NUM + TARGET_URL_BEFORE_KEWORD \
                      + quote(s) + TARGET_URL_REST
         get_link_from_news_title(page_num, target_URL,s)
-        
+    threading.Timer(3600,function).start()
+
+
+# 메인함수
+def main():  
+   function() 
+   
+   
+     
+   
 
 
 if __name__ == '__main__':
